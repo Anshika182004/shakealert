@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Shake Alert/3D Sphere Vibration Demo</title>
+  <style>
+    body, html {
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden; 
+      background: #111; 
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; 
+      flex-direction: column;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+    #canvas-container {
+      width: 100vw; 
+      height: 80vh; 
+      display: block;
+    }
+    h1 {
+      margin: 20px;
+      color: #ff5722;
+    }
+    button {
+      background: #ff5722;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      border-radius: 40px;
+      box-shadow: 0 4px 10px rgba(255,87,34,0.7);
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #e64a19;
+    }
+  </style>
+</head>
+<body>
+  <h1>3D Vibrating Sphere Demo</h1>
+  <div id="canvas-container"></div>
+  <button id="intensity-btn">Simulate Vibration</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script>
+    let scene, camera, renderer, sphere;
+    let vibrationIntensity = 0;
+
+    function init() {
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / (window.innerHeight * 0.8),
+        0.1,
+        1000
+      );
+      camera.position.z = 4;
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight * 0.8);
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+      // Geometry
+      const geometry = new THREE.SphereGeometry(1.2, 128, 128);
+
+      // Use a realistic material: MeshPhysicalMaterial with clearcoat for shininess
+      const material = new THREE.MeshPhysicalMaterial({
+        color: 0xff5722,
+        roughness: 0.3,
+        metalness: 0.8,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1,
+        emissive: 0x330000,
+        emissiveIntensity: 0.6,
+        reflectivity: 0.9,
+      });
+
+      sphere = new THREE.Mesh(geometry, material);
+      scene.add(sphere);
+
+      // Lighting for realistic look
+      const light1 = new THREE.PointLight(0xff5722, 1.2);
+      light1.position.set(5, 5, 5);
+      scene.add(light1);
+
+      const light2 = new THREE.PointLight(0xffffff, 0.5);
+      light2.position.set(-5, -3, 5);
+      scene.add(light2);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      window.addEventListener('resize', onWindowResize, false);
+
+      animate();
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / (window.innerHeight * 0.8);
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight * 0.8);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Slow rotation
+      sphere.rotation.y += 0.005;
+
+      // Vibration shake
+      if (vibrationIntensity > 0) {
+        const shakeAmount = vibrationIntensity * 0.02;
+        sphere.position.x = (Math.random() - 0.5) * shakeAmount;
+        sphere.position.y = (Math.random() - 0.5) * shakeAmount;
+        sphere.material.emissiveIntensity = 0.6 + vibrationIntensity * 1.5;
+      } else {
+        sphere.position.x = 0;
+        sphere.position.y = 0;
+        sphere.material.emissiveIntensity = 0.6;
+      }
+
+      // Color shift based on intensity (cracking effect)
+      if (vibrationIntensity > 0.6) {
+        sphere.material.color.set(0xff3300);
+      } else if (vibrationIntensity > 0.3) {
+        sphere.material.color.set(0xff7744);
+      } else {
+        sphere.material.color.set(0xff5722);
+      }
+
+      // Fade vibration
+      vibrationIntensity = Math.max(0, vibrationIntensity - 0.01);
+
+      renderer.render(scene, camera);
+    }
+
+    document.getElementById('intensity-btn').addEventListener('click', () => {
+      vibrationIntensity = 0.4 + Math.random() * 0.5;
+    });
+
+    init();
+  </script>
+</body>
+</html>
